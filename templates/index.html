@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="static/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>    
+    <script src="static/lodash.js"></script>
+    <script src="static/knockout-3.4.2.js"></script>
+    <script src="static/Chart.js"></script>
+    <!--<script src="jquery-ui.js"></script> 
+    <link rel="stylesheet" type="text/css" href="common.css">
+    <link rel="stylesheet" type="text/css" href="jquery-ui.css"> -->
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .chart-container {
+            width: 500px;
+            margin-left: 40px;
+            margin-right: 40px;
+            margin-bottom: 40px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        offenses = {{offenses | tojson}}
+        sources = {{sources | tojson}}
+    </script>
+
+    <div>
+        <input type="checkbox" data-bind="checked: $data.OffensesVM.viewRegistered, event: {change:OffensesVM.changeViewRegistered}">Зарегистрированные</input>
+        <input type="checkbox" data-bind="checked: $data.OffensesVM.viewAssigned, event: {change:OffensesVM.changeViewRegistered}">Взятые в работу</input>
+        <input type="checkbox" data-bind="checked: $data.OffensesVM.viewClosed, event: {change:OffensesVM.changeViewRegistered}">Обработанные и закрытые</input>
+
+        <div class="container">
+            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewRegistered">
+                <canvas title="Зарегистрированные" width="500" height="250" id="regOffense" style="display: block; width: 500px; height: 250px;"
+                    data-bind="regBarBind: $data.OffensesVM.regOffenses"></canvas>
+            </div>
+            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewAssigned">
+                <canvas title="Взятые в работу" width="500" height="250" id="assignOffense" style="display: block; width: 500px; height: 250px;"
+                    data-bind="regBarBind: $data.OffensesVM.assignOffenses, visible: $data.OffensesVM.assignOffenses().length > 0"></canvas>
+            </div>
+            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewClosed">
+                <canvas title="Обработанные и закрытые" width="500" height="250" id="closeOffense" style="display: block; width: 500px; height: 250px;"
+                    data-bind="regBarBind: $data.OffensesVM.closeOffenses"></canvas>
+            </div>
+        </div>
+
+        <table style="font-size: 12px; border: 1px solid #CCCCCC;">
+            <thead>
+                <tr style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Domain</th>
+                    <th width="15%">Offense Source</th>
+                    <th width="20%">Rules</td>
+                        <th>Severity</th>
+                        <th>Events</th>
+                        <th>Assigned to</th>
+                        <th>Closing user</th>
+                        <th>Source addresses</th>
+                        <th>Local destination ids</th>
+                        <th>Start time</th>
+                        <th>Last update</th>
+                        <th>Сlose time</th>
+                        <th>Elapsed Time</th>
+                        <th>Elapsed Str</th>
+                </tr>
+            </thead>
+
+            <tr data-bind="visible: $data.OffensesVM.viewRegistered" style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">
+                <th colspan="16">Зарегистрированные</th>
+            </tr>
+            <tbody data-bind="visible: $data.OffensesVM.viewRegistered, foreach: $data.OffensesVM.regOffenses">
+                <tr>
+                    <td data-bind="text: id"></td>
+                    <td data-bind="text: status"></td>
+                    <td data-bind="text: domain_id"></td>
+                    <td data-bind="text: offense_source"></td>
+                    <td data-bind="text: _.map(rules,'name')"></td>
+                    <td data-bind="text: severity"></td>
+                    <td data-bind="text: event_count"></td>
+                    <td data-bind="text: assigned_to"></td>
+                    <td data-bind="text: closing_user"></td>
+                    <td data-bind="text: source_addresses"></td>
+                    <td data-bind="text: local_destination_address_ids"></td>
+                    <td data-bind="text: new Date(start_time).toLocaleString()"></td>
+                    <td data-bind="text: new Date(last_updated_time).toLocaleString()"></td>
+                    <td data-bind="text: close_time ? new Date(last_updated_time).toLocaleString(): ''"></td>
+                    <td data-bind="text: elapsed_time"></td>
+                    <td data-bind="text: elapsed_str"></td>
+                </tr>
+            </tbody>
+
+            <tr data-bind="visible: $data.OffensesVM.viewAssigned" style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">
+                <th colspan="16">Взятые в работу</th>
+            </tr>
+
+            <tbody data-bind="visible: $data.OffensesVM.viewAssigned, foreach: $data.OffensesVM.assignOffenses">
+                <tr>
+                    <td data-bind="text: id"></td>
+                    <td data-bind="text: status"></td>
+                    <td data-bind="text: domain_id"></td>
+                    <td data-bind="text: offense_source"></td>
+                    <td data-bind="text: _.map(rules,'name')"></td>
+                    <td data-bind="text: severity"></td>
+                    <td data-bind="text: event_count"></td>
+                    <td data-bind="text: assigned_to"></td>
+                    <td data-bind="text: closing_user"></td>
+                    <td data-bind="text: source_addresses"></td>
+                    <td data-bind="text: local_destination_address_ids"></td>
+                    <td data-bind="text: new Date(start_time).toLocaleString()"></td>
+                    <td data-bind="text: new Date(last_updated_time).toLocaleString()"></td>
+                    <td data-bind="text: close_time ? new Date(last_updated_time).toLocaleString(): ''"></td>
+                    <td data-bind="text: elapsed_time"></td>
+                    <td data-bind="text: elapsed_str"></td>
+                </tr>
+            </tbody>
+
+            <tr data-bind="visible: $data.OffensesVM.viewClosed" style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">
+                <th colspan="16">Обработанные и закрытые</th>
+            </tr>
+
+            <tbody data-bind="visible: $data.OffensesVM.viewClosed, foreach: $data.OffensesVM.closeOffenses">
+                <tr>
+                    <td data-bind="text: id"></td>
+                    <td data-bind="text: status"></td>
+                    <td data-bind="text: domain_id"></td>
+                    <td data-bind="text: offense_source"></td>
+                    <td data-bind="text: _.map(rules,'name')"></td>
+                    <td data-bind="text: severity"></td>
+                    <td data-bind="text: event_count"></td>
+                    <td data-bind="text: assigned_to"></td>
+                    <td data-bind="text: closing_user"></td>
+                    <td data-bind="text: source_addresses"></td>
+                    <td data-bind="text: local_destination_address_ids"></td>
+                    <td data-bind="text: new Date(start_time).toLocaleString()"></td>
+                    <td data-bind="text: new Date(last_updated_time).toLocaleString()"></td>
+                    <td data-bind="text: close_time ? new Date(last_updated_time).toLocaleString(): ''"></td>
+                    <td data-bind="text: elapsed_time"></td>
+                    <td data-bind="text: elapsed_str"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+    <table style="font-size: 12px; border: 1px solid #CCCCCC;">
+        <thead>
+            <tr style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">
+                <th>Name</th>
+                <th>Avarage EPS</th>
+                <th>Last Event Time</th>
+            </tr>
+        </thead>
+
+        <tbody data-bind="foreach: $data.OffensesVM.logSources">
+            <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: average_eps"></td>
+                <td data-bind="text: new Date( last_event_time ).toLocaleString()"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="static/index.js"></script>
+
+    <div id="containerLogSources" style="min-width: 310px; min-height: 900px"></div>
+	<script type="text/javascript">
+		var series = {{series | tojson}};
+		var categories = {{categories | tojson}};
+		$('document').ready(function () {
+		    $('#containerLogSources').highcharts({
+		        chart: {
+		            type: 'area'
+		        },
+		        title: {
+		            text: 'Log Source Breakdown per Hour'
+		        },
+		        xAxis: {
+		            categories: categories,
+		            tickmarkPlacement: 'on',
+		            title: {
+		                enabled: false
+		            }
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Event Count'
+		            },
+		            labels: {
+		                formatter: function () {
+		                    return this.value / 1000;
+		                }
+		            }
+		        },
+		        tooltip: {
+		            split: true
+		        },
+		        plotOptions: {
+		            area: {
+		                stacking: 'normal',
+		                lineColor: '#666666',
+		                lineWidth: 1,
+		                marker: {
+		                    lineWidth: 1,
+		                    lineColor: '#666666'
+		                }
+		            }
+		        },
+		        series: series
+		    });
+		});
+	</script>        
+</body>
+
+</html>
