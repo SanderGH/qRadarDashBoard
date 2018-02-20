@@ -142,7 +142,7 @@ ko.bindingHandlers.regBarBind = {
     update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         var data1 = ko.unwrap( valueAccessor());
         var data = _.filter( data1 , function(offense){
-            return ( new Date() - new Date( offense.start_time ) ) <= 48*60*60*1000
+            return ( new Date() - new Date( offense.start_time ) ) <= 480*60*60*1000
         })
 
         severities = ( _.map( _.groupBy( data, 'severity' ),
@@ -168,7 +168,7 @@ function OffensesViewModel()
 {
     var self = this;
 
-    self.logSources =  ko.observableArray(JSON.parse("sources"));
+    self.logSources =  ko.observableArray(JSON.parse(sources));
     self.filteredOffenses = ko.observableArray(offenses);
     self.regOffenses = ko.observableArray( _.filter( offenses, function( offense ) {
         return ( offense.assigned_to == null && offense.close_time == null );

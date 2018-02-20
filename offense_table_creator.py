@@ -35,15 +35,79 @@ def get_entity_by_id(id, entity_endpoint, headers):
     except Exception, e:
         qpylib.log('Unable to retrieve entity records from QRadar. Error: {0}'.format(str(e)), level='error')
 
+def GetAnalyticsRuleByID(id, rulesDict):
+    rules = json.loads(rulesDict)
+    for rule in rules:
+        if id==rule['id']:
+            return rule
+    return None
+
+def GetLocalDestinationAddressByID(Id, destDict):
+    destAddresses = json.loads(destDict)
+    for ldaItem in destAddresses:
+        if Id == ldaItem['id']:
+            return ldaItem
+    return None
+
+def GetSourceAddressByID(Id, srcDict):
+    srcAddresses = json.loads(srcDict)
+    for srcItem in srcAddresses:
+        if Id == srcItem['id']:
+            return srcItem
+    return None
+
+
+def GetObjByIDFromJson(Id, srcDict):
+    for item in srcDict:
+        if Id == item['id']:
+            return item
+    return None
+
+
+
 def create_offense_table():
     offense_table = []
     headers = {"Content-type": "application/json",
                "Accept"      : "application/json"}
 
-    offenses_endpoint  = '/api/siem/offenses'
     rules_endpoint     = '/api/analytics/rules'
+    offenses_endpoint  = '/api/siem/offenses'
     src_addr_endpoint  = '/api/siem/source_addresses'
     ld_addr_endpoint   = '/api/siem/local_destination_addresses'
+#################################
+##    #get '/api/analytics/rules'
+##    analitic_rules = offense_item['rules']
+##    rule_dict = {}
+##    rule_list = []
+##    for rule_item in analitic_rules:
+##        rule_obj = get_entity_by_id(rule_item['id'], rules_endpoint, headers)
+##        rule_dict['id'] = rule_obj['id']
+##        rule_dict['name'] = rule_obj['name']
+##        rule_list.append(rule_dict)
+##    offense_dict['rules'] = rule_list
+##
+##    #get '/api/siem/source_addresses'
+##    src_addr_list = []
+##    for src_addr_id in offense_item['source_address_ids']:
+##        src_addr_obj = get_entity_by_id(src_addr_id, src_addr_endpoint, headers)
+##        src_addr_list.append(src_addr_obj['source_ip'])
+##    offense_dict['source_addresses'] = src_addr_list
+##
+##    #get '/api/siem/source_addresses'
+##    dst_addr_list = []
+##    for dst_addr_id in offense_item['local_destination_address_ids']:
+##        dst_addr_obj = get_entity_by_id(dst_addr_id, ld_addr_endpoint, headers)
+##        dst_addr_list.append(dst_addr_obj['local_destination_ip'])
+##    offense_dict['local_destination_addresses'] = dst_addr_list
+#################################
+    #get '/api/analytics/rules'
+
+    rulesDict = get_entity(rules_endpoint, headers)
+    destDict  = get_entity(ld_addr_endpoint, headers)
+    srcDict   = get_entity(src_addr_endpoint, headers)
+
+
+#######################################################
 
     offenses = get_entity(offenses_endpoint, headers)
     for offense_item in  offenses:
@@ -61,38 +125,42 @@ def create_offense_table():
         offense_dict['offense_source']    = offense_item['offense_source']
         offense_dict['last_updated_time'] = offense_item['last_updated_time']
 
-        #get notes
-        notes_endpoint = offenses_endpoint + '/' + str(offense_item['id']) + '/notes'
-        offense_notes_list = get_entity(notes_endpoint, headers)
-        note_list = []
-        for note_item in offense_notes_list:
-            note_list.append(note_item['note_text'])
-        offense_dict['note'] = note_list
-
         #get '/api/analytics/rules'
         analitic_rules = offense_item['rules']
         rule_dict = {}
         rule_list = []
         for rule_item in analitic_rules:
-            rule_obj = get_entity_by_id(rule_item['id'], rules_endpoint, headers)
-            rule_dict['id'] = rule_obj['id']
-            rule_dict['name'] = rule_obj['name']
-            rule_list.append(rule_dict)
+            #rule_obj = get_entity_by_id(rule_item['id'], rules_endpoint, headers)
+            rule_obj = GetObjByIDFromJson(rule_item['id'], rulesDict)
+            if rule_obj != None:
+                rule_dict['id'] = rule_obj['id']
+                rule_dict['name'] = rule_obj['name']
+                rule_list.append(rule_dict)
         offense_dict['rules'] = rule_list
 
         #get '/api/siem/source_addresses'
         src_addr_list = []
         for src_addr_id in offense_item['source_address_ids']:
-            src_addr_obj = get_entity_by_id(src_addr_id, src_addr_endpoint, headers)
+            #src_addr_obj = get_entity_by_id(src_addr_id, src_addr_endpoint, headers)
+            src_addr_obj = GetObjByIDFromJson(src_addr_id, srcDict)
             src_addr_list.append(src_addr_obj['source_ip'])
         offense_dict['source_addresses'] = src_addr_list
 
         #get '/api/siem/source_addresses'
         dst_addr_list = []
         for dst_addr_id in offense_item['local_destination_address_ids']:
-            dst_addr_obj = get_entity_by_id(dst_addr_id, ld_addr_endpoint, headers)
+            #dst_addr_obj = get_entity_by_id(dst_addr_id, ld_addr_endpoint, headers)
+            dst_addr_obj = GetObjByIDFromJson(dst_addr_id, destDict)
             dst_addr_list.append(dst_addr_obj['local_destination_ip'])
         offense_dict['local_destination_addresses'] = dst_addr_list
+
+        #get notes
+##        notes_endpoint = offenses_endpoint + '/' + str(offense_item['id']) + '/notes'
+##        offense_notes_list = get_entity(notes_endpoint, headers)
+##        note_list = []
+##        for note_item in offense_notes_list:
+##            note_list.append(note_item['note_text'])
+        offense_dict['note'] = []
 
         offense_table.append(offense_dict)
 

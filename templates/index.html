@@ -3,7 +3,7 @@
 
 <head>
     <script src="static/jquery-3.2.1.js"></script>
-	<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>    
+    <script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>
     <script src="static/lodash.js"></script>
     <script src="static/knockout-3.4.2.js"></script>
     <script src="static/Chart.js"></script>
@@ -35,8 +35,8 @@
 
 <body>
     <script>
-        offenses = {{offenses | tojson}}
-        sources = {{sources | tojson}}
+        offenses = {{ offenses | tojson }}
+        sources = {{ sources | tojson }}
     </script>
 
     <div>
@@ -66,18 +66,18 @@
                     <th>Status</th>
                     <th>Domain</th>
                     <th width="15%">Offense Source</th>
-                    <th width="20%">Rules</td>
-                        <th>Severity</th>
-                        <th>Events</th>
-                        <th>Assigned to</th>
-                        <th>Closing user</th>
-                        <th>Source addresses</th>
-                        <th>Local destination ids</th>
-                        <th>Start time</th>
-                        <th>Last update</th>
-                        <th>Сlose time</th>
-                        <th>Elapsed Time</th>
-                        <th>Elapsed Str</th>
+                    <th width="20%">Rules</th>
+                    <th>Severity</th>
+                    <th>Events</th>
+                    <th>Assigned to</th>
+                    <th>Closing user</th>
+                    <th>Source addresses</th>
+                    <th>Local destination ids</th>
+                    <th>Start time</th>
+                    <th>Last update</th>
+                    <th>Сlose time</th>
+                    <th>Elapsed Time</th>
+                    <th>Elapsed Str</th>
                 </tr>
             </thead>
 
@@ -179,52 +179,52 @@
     <script src="static/index.js"></script>
 
     <div id="containerLogSources" style="min-width: 310px; min-height: 900px"></div>
-	<script type="text/javascript">
-		var series = {{series | tojson}};
-		var categories = {{categories | tojson}};
-		$('document').ready(function () {
-		    $('#containerLogSources').highcharts({
-		        chart: {
-		            type: 'area'
-		        },
-		        title: {
-		            text: 'Log Source Breakdown per Hour'
-		        },
-		        xAxis: {
-		            categories: categories,
-		            tickmarkPlacement: 'on',
-		            title: {
-		                enabled: false
-		            }
-		        },
-		        yAxis: {
-		            title: {
-		                text: 'Event Count'
-		            },
-		            labels: {
-		                formatter: function () {
-		                    return this.value / 1000;
-		                }
-		            }
-		        },
-		        tooltip: {
-		            split: true
-		        },
-		        plotOptions: {
-		            area: {
-		                stacking: 'normal',
-		                lineColor: '#666666',
-		                lineWidth: 1,
-		                marker: {
-		                    lineWidth: 1,
-		                    lineColor: '#666666'
-		                }
-		            }
-		        },
-		        series: series
-		    });
-		});
-	</script>        
+    <script type="text/javascript">
+        var series = {{ series | tojson}};
+        var categories = {{ categories | tojson}};
+        $('document').ready(function () {
+            $('#containerLogSources').highcharts({
+                chart: {
+                    type: 'area'
+                },
+                title: {
+                    text: 'Log Source Breakdown per Hour'
+                },
+                xAxis: {
+                    categories: categories,
+                    tickmarkPlacement: 'on',
+                    title: {
+                        enabled: false
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: 'Event Count'
+                    },
+                    labels: {
+                        formatter: function () {
+                            return this.value / 1000;
+                        }
+                    }
+                },
+                tooltip: {
+                    split: true
+                },
+                plotOptions: {
+                    area: {
+                        stacking: 'normal',
+                        lineColor: '#666666',
+                        lineWidth: 1,
+                        marker: {
+                            lineWidth: 1,
+                            lineColor: '#666666'
+                        }
+                    }
+                },
+                series: series
+            });
+        });
+    </script>
 </body>
 
 </html>
