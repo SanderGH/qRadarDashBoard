@@ -18,4 +18,6 @@ def index():
     categories = [str(int(s)+1) + ':00' for s in categories]
     series = offense_table_creator.highchartify_data(events)
 
-    return render_template('index.html', sources=sources, offenses=offenses,categories=categories, series=series)
+    severity=offense_table_creator.make_series_for_registered_offenses()
+
+    return render_template('index.html', sources=sources, offenses=offenses,categories=categories, series=series,severity=severity)

@@ -37,6 +37,7 @@
     <script>
         offenses = {{ offenses | tojson }}
         sources = {{ sources | tojson }}
+        severity = {{ severity | tojson }}
     </script>
 
     <div>
@@ -44,21 +45,40 @@
         <input type="checkbox" data-bind="checked: $data.OffensesVM.viewAssigned, event: {change:OffensesVM.changeViewRegistered}">Взятые в работу</input>
         <input type="checkbox" data-bind="checked: $data.OffensesVM.viewClosed, event: {change:OffensesVM.changeViewRegistered}">Обработанные и закрытые</input>
 
+        <!-- pie chart -->
         <div class="container">
             <div class="chart-container" data-bind="visible: $data.OffensesVM.viewRegistered">
+                <!--<canvas title="Зарегистрированные" width="500" height="250" id="regOffense" style="display: block; width: 500px; height: 250px;"
+                    data-bind="regBarBind: $data.OffensesVM.regOffenses"></canvas> -->
                 <canvas title="Зарегистрированные" width="500" height="250" id="regOffense" style="display: block; width: 500px; height: 250px;"
-                    data-bind="regBarBind: $data.OffensesVM.regOffenses"></canvas>
+                    data-bind="regBarBind: $data.OffensesVM.severitiesReg"></canvas>
             </div>
-            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewAssigned">
+            <!--<div class="chart-container" data-bind="visible: $data.OffensesVM.viewAssigned">
                 <canvas title="Взятые в работу" width="500" height="250" id="assignOffense" style="display: block; width: 500px; height: 250px;"
                     data-bind="regBarBind: $data.OffensesVM.assignOffenses, visible: $data.OffensesVM.assignOffenses().length > 0"></canvas>
-            </div>
+            </div>-->
             <div class="chart-container" data-bind="visible: $data.OffensesVM.viewClosed">
                 <canvas title="Обработанные и закрытые" width="500" height="250" id="closeOffense" style="display: block; width: 500px; height: 250px;"
-                    data-bind="regBarBind: $data.OffensesVM.closeOffenses"></canvas>
+                    data-bind="regBarBind: $data.OffensesVM.severitiesClose"></canvas>
             </div>
         </div>
 
+        <!-- timeline chart -->
+        <div class="container">
+            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewRegistered">
+                <canvas title="Зарегистрированные" width="800" height="450" id="regOffense1" style="display: block; width: 500px; height: 250px;"
+                    data-bind="timeLineChart: $data.OffensesVM.severitiesReg"></canvas>
+            </div>
+            <!--<div class="chart-container" data-bind="visible: $data.OffensesVM.viewAssigned">
+                <canvas title="Взятые в работу" width="500" height="250" id="assignOffense1" style="display: block; width: 500px; height: 250px;"
+                    data-bind="timeLineChart: $data.OffensesVM.assignOffenses, visible: $data.OffensesVM.assignOffenses().length > 0"></canvas>
+            </div>-->
+            <div class="chart-container" data-bind="visible: $data.OffensesVM.viewClosed">
+                <canvas title="Обработанные и закрытые" width="800" height="450" id="closeOffense1" style="display: block; width: 500px; height: 250px;"
+                    data-bind="timeLineChart: $data.OffensesVM.severitiesClose"></canvas>
+            </div>
+        </div>
+        
         <table style="font-size: 12px; border: 1px solid #CCCCCC;">
             <thead>
                 <tr style="background-color: #EFEFEF; border: 1px solid #CCCCCC;">

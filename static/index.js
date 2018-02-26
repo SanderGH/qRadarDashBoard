@@ -1,27 +1,4 @@
-/*function openCity(evt, cityName) {
-    // Declare all variables
-    var i, tabcontent, tablinks;
-
-    // Get all elements with class="tabcontent" and hide them
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-
-    // Get all elements with class="tablinks" and remove the class "active"
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-
-    // Show the current tab, and add an "active" class to the link that opened the tab
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
-document.getElementById("defaultOpen").click();*/
-
 // model
-//var monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 function dateDiff( date2, date1 ) {
     date1 = new Date( date1 );
     date2 = new Date( date2 );
@@ -104,11 +81,18 @@ offenses =  _.map( JSON.parse(offenses), function(value, key) {
     };
 } );
 
+backgroundColors = [
+    'rgb(255, 99, 132)',
+    'rgb(54, 162, 235)',
+    'rgb(255, 206, 86)',
+    'rgb(75, 192, 192)',
+    'rgb(153, 102, 255)',
+    'rgb(255, 159, 64)'
+]
 regPieChart = [];
+timeLineChart = [];
 ko.bindingHandlers.regBarBind = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-        var data = ko.unwrap(valueAccessor());
-
         var ctx = document.getElementById(element.id);
         regPieChart[element.id] = new Chart( ctx, {
             type: 'pie',
@@ -116,15 +100,7 @@ ko.bindingHandlers.regBarBind = {
             // The data for our dataset
             data: {
                 datasets: [{
-                    backgroundColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(54, 162, 235)',
-                        'rgb(255, 206, 86)',
-                        'rgb(75, 192, 192)',
-                        'rgb(153, 102, 255)',
-                        'rgb(255, 159, 64)'
-                    ],
-                    //borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: backgroundColors
                 }]
             },
             options: {
@@ -140,20 +116,51 @@ ko.bindingHandlers.regBarBind = {
         });
     },
     update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-        var data1 = ko.unwrap( valueAccessor());
-        var data = _.filter( data1 , function(offense){
-            return ( new Date() - new Date( offense.start_time ) ) <= 480*60*60*1000
-        })
-
-        severities = ( _.map( _.groupBy( data, 'severity' ),
-            function(value, key){  
-                return { 'severity' : key, 'count' : value.length};
-            }
-        ));
-    
-        regPieChart[element.id].data.labels = _.map(severities, 'severity');
+        var severities = ko.unwrap(valueAccessor());
+        for ( key in severities) {
+            regPieChart[element.id].data.labels.push(key);
+        }
+        regPieChart[element.id].data.datasets.push({});
         regPieChart[element.id].data.datasets[0].data = _.map(severities, 'count');
+        regPieChart[element.id].data.backgroundColor = backgroundColors;
         regPieChart[element.id].update();
+    }                        
+}
+
+ko.bindingHandlers.timeLineChart = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        var data = ko.unwrap(valueAccessor());
+
+        var ctx = document.getElementById(element.id);
+        timeLineChart[element.id] = new Chart( ctx, {
+            type: 'line',
+
+            // The data for our dataset
+            data: {
+                labels:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+            },
+            options: {
+                title: {
+                    display: true,
+                    text: element.title
+                },
+                legend: {
+                    position: "right"
+                },
+                responsive: true
+            }            
+        });
+    },
+    update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        var severities = ko.unwrap( valueAccessor());
+
+        for ( key in severities) {
+            var index = timeLineChart[element.id].data.datasets.push({});
+            timeLineChart[element.id].data.datasets[index-1].label = key;
+            timeLineChart[element.id].data.datasets[index-1].data = severities[key]["hours"];
+            timeLineChart[element.id].data.datasets[index-1].backgroundColor = backgroundColors[index-1];
+        };
+        timeLineChart[element.id].update();
     }                        
 }
 
@@ -168,6 +175,9 @@ function OffensesViewModel()
 {
     var self = this;
 
+    var sev = JSON.parse(severity);
+    self.severitiesReg = ko.observable(sev.registered);
+    self.severitiesClose = ko.observable(sev.closed);
     self.logSources =  ko.observableArray(JSON.parse(sources));
     self.filteredOffenses = ko.observableArray(offenses);
     self.regOffenses = ko.observableArray( _.filter( offenses, function( offense ) {

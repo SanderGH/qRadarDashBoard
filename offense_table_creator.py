@@ -1,7 +1,8 @@
-import time
+import time,datetime
 from requests import get, post
 import json
 from qpylib import qpylib
+from collections import Counter
 
 def get_offenses():
     offenses_endpoint = '/api/siem/offenses'
@@ -16,9 +17,21 @@ def get_offenses():
         qpylib.log('unable to retrieve offense records from QRadar. Error: {0}'.format(str(e)), level='error')
 
 
-def get_entity(entity_endpoint, headers, query=None, method='GET'):
+def get_entity(entity_endpoint, headers, query=None, method='GET', fields='', filter=''):
     try:
-        response = qpylib.REST(method, entity_endpoint, headers=headers, params=query)
+        full_request = str(entity_endpoint)
+        is_fields = False
+        if fields != '':
+            full_request += '?fields=' + fields
+            is_fields = True
+
+        if filter != '':
+            if is_fields:
+                full_request += '&filter=' + filter
+            else:
+                full_request += '?filter=' + filter
+
+        response = qpylib.REST(method, full_request, headers=headers, params=query)
         if response.status_code != 200:
             qpylib.log('API returned an error. Error: {0}'.format(response.content), level='error')
         return response.json()
@@ -35,34 +48,11 @@ def get_entity_by_id(id, entity_endpoint, headers):
     except Exception, e:
         qpylib.log('Unable to retrieve entity records from QRadar. Error: {0}'.format(str(e)), level='error')
 
-def GetAnalyticsRuleByID(id, rulesDict):
-    rules = json.loads(rulesDict)
-    for rule in rules:
-        if id==rule['id']:
-            return rule
-    return None
-
-def GetLocalDestinationAddressByID(Id, destDict):
-    destAddresses = json.loads(destDict)
-    for ldaItem in destAddresses:
-        if Id == ldaItem['id']:
-            return ldaItem
-    return None
-
-def GetSourceAddressByID(Id, srcDict):
-    srcAddresses = json.loads(srcDict)
-    for srcItem in srcAddresses:
-        if Id == srcItem['id']:
-            return srcItem
-    return None
-
-
-def GetObjByIDFromJson(Id, srcDict):
-    for item in srcDict:
-        if Id == item['id']:
+def get_object_by_field_from_json(key_field, relate_id, json_response):
+    for item in json_response:
+        if relate_id == item[key_field]:
             return item
     return None
-
 
 
 def create_offense_table():
@@ -74,40 +64,10 @@ def create_offense_table():
     offenses_endpoint  = '/api/siem/offenses'
     src_addr_endpoint  = '/api/siem/source_addresses'
     ld_addr_endpoint   = '/api/siem/local_destination_addresses'
-#################################
-##    #get '/api/analytics/rules'
-##    analitic_rules = offense_item['rules']
-##    rule_dict = {}
-##    rule_list = []
-##    for rule_item in analitic_rules:
-##        rule_obj = get_entity_by_id(rule_item['id'], rules_endpoint, headers)
-##        rule_dict['id'] = rule_obj['id']
-##        rule_dict['name'] = rule_obj['name']
-##        rule_list.append(rule_dict)
-##    offense_dict['rules'] = rule_list
-##
-##    #get '/api/siem/source_addresses'
-##    src_addr_list = []
-##    for src_addr_id in offense_item['source_address_ids']:
-##        src_addr_obj = get_entity_by_id(src_addr_id, src_addr_endpoint, headers)
-##        src_addr_list.append(src_addr_obj['source_ip'])
-##    offense_dict['source_addresses'] = src_addr_list
-##
-##    #get '/api/siem/source_addresses'
-##    dst_addr_list = []
-##    for dst_addr_id in offense_item['local_destination_address_ids']:
-##        dst_addr_obj = get_entity_by_id(dst_addr_id, ld_addr_endpoint, headers)
-##        dst_addr_list.append(dst_addr_obj['local_destination_ip'])
-##    offense_dict['local_destination_addresses'] = dst_addr_list
-#################################
-    #get '/api/analytics/rules'
 
-    rulesDict = get_entity(rules_endpoint, headers)
-    destDict  = get_entity(ld_addr_endpoint, headers)
-    srcDict   = get_entity(src_addr_endpoint, headers)
-
-
-#######################################################
+    rules_dict    = get_entity(rules_endpoint, headers)
+    ld_addr_dict  = get_entity(ld_addr_endpoint, headers)
+    src_addr      = get_entity(src_addr_endpoint, headers)
 
     offenses = get_entity(offenses_endpoint, headers)
     for offense_item in  offenses:
@@ -130,8 +90,7 @@ def create_offense_table():
         rule_dict = {}
         rule_list = []
         for rule_item in analitic_rules:
-            #rule_obj = get_entity_by_id(rule_item['id'], rules_endpoint, headers)
-            rule_obj = GetObjByIDFromJson(rule_item['id'], rulesDict)
+            rule_obj = get_object_by_field_from_json('id', rule_item['id'], rules_dict)
             if rule_obj != None:
                 rule_dict['id'] = rule_obj['id']
                 rule_dict['name'] = rule_obj['name']
@@ -141,16 +100,14 @@ def create_offense_table():
         #get '/api/siem/source_addresses'
         src_addr_list = []
         for src_addr_id in offense_item['source_address_ids']:
-            #src_addr_obj = get_entity_by_id(src_addr_id, src_addr_endpoint, headers)
-            src_addr_obj = GetObjByIDFromJson(src_addr_id, srcDict)
+            src_addr_obj = get_object_by_field_from_json('id', src_addr_id, src_addr)
             src_addr_list.append(src_addr_obj['source_ip'])
         offense_dict['source_addresses'] = src_addr_list
 
-        #get '/api/siem/source_addresses'
+        #get '/api/siem/local_destination_addresses'
         dst_addr_list = []
         for dst_addr_id in offense_item['local_destination_address_ids']:
-            #dst_addr_obj = get_entity_by_id(dst_addr_id, ld_addr_endpoint, headers)
-            dst_addr_obj = GetObjByIDFromJson(dst_addr_id, destDict)
+            dst_addr_obj = get_object_by_field_from_json('id', dst_addr_id, ld_addr_dict)
             dst_addr_list.append(dst_addr_obj['local_destination_ip'])
         offense_dict['local_destination_addresses'] = dst_addr_list
 
@@ -233,11 +190,64 @@ def get_log_sources_data():
 ##            error = True
 ##
 ##    response=get_entity('/api/ariel/searches/' + search_id +'/results', headers=headers)
-    search_id = 'd31d572f-f36f-4150-afbc-8b0a64be11f9'
+    search_id = '05fd68f4-a769-4fc0-a515-90aec90fa0c3'
     response=get_entity('/api/ariel/searches/' + search_id +'/results', headers=headers)
     return response.get('events')
 
+def group_by_severity(offense_type, key_field):
+    severity = {}
+    severity_counter = Counter()
+    severity_hours = {}
+    for item in offense_type:
+        severity_counter[item['severity']] += 1
+        #decoded_time = datetime.datetime.utcfromtimestamp(item['start_time']/1000)
+        decoded_time = datetime.datetime.utcfromtimestamp(item[key_field]/1000)
+        if severity_hours.has_key(item['severity']) is not True:
+            severity_hours[item['severity']] = [0] * 25
+        severity_hours[item['severity']][decoded_time.hour] += 1
 
+    for item in offense_type:
+        severity_data = {}
+        severity_data['count'] = severity_counter[item['severity']]
+        severity_data['hours'] = severity_hours[item['severity']]
+        severity[item['severity']] = severity_data
+    return severity
+
+
+def get_registered_offenses():
+    fields = 'severity,assigned_to,start_time,close_time'
+    headers = {"Content-type": "application/json",
+               "Accept"      : "application/json"}
+
+    yesterday =  datetime.datetime.now() - datetime.timedelta(hours=480)
+    start_time = int(time.mktime(yesterday.timetuple()))
+    filter = 'assigned_to is null and close_time is null and start_time >=' + str(start_time*1000)
+
+    offenses_endpoint  = '/api/siem/offenses'
+    registered_offenses = get_entity(offenses_endpoint, headers, None, fields=fields,filter=filter)
+
+    return group_by_severity(registered_offenses, 'start_time')
+
+def get_closed_offenses():
+    fields = 'severity,assigned_to,start_time,close_time'
+    headers = {"Content-type": "application/json",
+               "Accept"      : "application/json"}
+
+    yesterday =  datetime.datetime.now() - datetime.timedelta(hours=480)
+    start_time = int(time.mktime(yesterday.timetuple()))
+    filter = 'assigned_to is not null and close_time is not null'
+
+    offenses_endpoint  = '/api/siem/offenses'
+    closed_offenses = get_entity(offenses_endpoint, headers, None, fields=fields,filter=filter)
+
+    return group_by_severity(closed_offenses, 'close_time')
+
+def make_series_for_registered_offenses():
+    all_offenses = {}
+    all_offenses['registered'] = get_registered_offenses()
+    all_offenses['closed']     = get_closed_offenses()
+
+    return json.dumps(all_offenses)
 
 
 
